@@ -1,7 +1,7 @@
 # File: live_power.py
 # Purpose: Live Power page for the House Energy Monitor app.
 #          Displays real-time power usage with auto-refresh and live chart.
-# Version: 1.0.0
+# Version: 1.1.0
 
 import streamlit as st
 import pandas as pd
@@ -25,10 +25,10 @@ def live_power_page(config):
     
     # Load configuration
     try:
-        refresh_interval = config.get('refresh_interval', 5)  # seconds
+        refresh_interval = config.get('polling', {}).get('interval_seconds', 3)
     except Exception as e:
         st.error(f"Failed to read config: {str(e)}")
-        refresh_interval = 5
+        refresh_interval = 3
     
     # Placeholder for live data (replace with actual sensor/API call)
     @st.cache_data(ttl=refresh_interval)

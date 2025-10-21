@@ -1,7 +1,7 @@
 # File: device.py
 # Purpose: Devices page for the House Energy Monitor app.
 #          Displays status and power usage for connected devices.
-# Version: 1.0.0
+# Version: 1.1.0
 
 import streamlit as st
 import pandas as pd
@@ -23,29 +23,33 @@ def device_page(config):
     
     # Load configuration
     try:
-        devices_config = config.get('devices', [])
+        devices_config = config.get('devices', {})
     except Exception as e:
         st.error(f"Failed to read device config: {str(e)}")
-        devices_config = []
-    
-    # Sample device data (replace with real data from DB or API)
-    device_data = pd.DataFrame({
-        'Device': ['Fridge', 'Lights', 'AC Unit', 'Charger'],
-        'Status': ['Online', 'Online', 'Offline', 'Online'],
-        'Power (W)': [150, 50, 0, 20],
-        'Last Update': ['2025-10-21 12:00', '2025-10-21 11:50', '2025-10-21 11:30', '2025-10-21 12:05']
-    })
+        devices_config = {}
     
     # Display device table
-    st.subheader("Device Status")
-    st.dataframe(device_data, use_container_width=True)
+    if devices_config:
+        device_data = pd.DataFrame([
+            {
+                'Device': details.get('name', key),
+                'Status': 'Online' if details.get('active', False) else 'Offline',
+                'IP': details.get('ip', 'N/A'),
+                'Power (W)': 'N/A',  # Replace with real data if available
+                'Last Update': 'N/A'  # Replace with real data if available
+            } for key, details in devices_config.items()
+        ])
+        st.subheader("Device Status")
+        st.dataframe(device_data, use_container_width=True)
+    else:
+        st.warning("No devices configured. Add some in the Configuration page.")
     
     # Device controls
     col1, col2 = st.columns(2)
     with col1:
         st.subheader("Add Device")
         new_device = st.text_input("Device Name")
-        new_power = st.number_input("Expected Power (W)", min_value=0.0)
+        new_ip = st.text_input("Device IP")
         if st.button("Add"):
             # Add logic here (e.g., update config or DB)
             st.success(f"Added {new_device}")
@@ -55,6 +59,3 @@ def device_page(config):
         if st.button("Refresh Status"):
             st.info("Refreshing device statuses...")
             st.rerun()
-    
-    if not devices_config:
-        st.warning("No devices configured. Add some in the Configuration page.")

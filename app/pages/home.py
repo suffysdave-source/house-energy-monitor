@@ -1,15 +1,15 @@
 # File: home.py
 # Purpose: Defines the Home page for the House Energy Monitor Streamlit app.
 #          Displays real-time power usage, daily metrics, and a 24-hour usage plot.
-# Version: 1.1.0
+# Version: 1.3.0
 
 import streamlit as st
 import pandas as pd
 import plotly.express as px
 import sqlite3
 import datetime
-import os
 import sys
+import os
 
 # Ensure utils directory is in the Python path
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'utils'))
@@ -28,7 +28,7 @@ def home_page(config):
     
     # Load configuration
     try:
-        db_path = config.get('database_path', 'energy.db')
+        db_path = config.get('database_path', '/home/dave/projects/house/energy.db')
     except Exception as e:
         st.error(f"Failed to read config: {str(e)}")
         return

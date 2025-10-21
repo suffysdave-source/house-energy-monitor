@@ -1,7 +1,7 @@
 # File: configuration.py
 # Purpose: Configuration page for the House Energy Monitor app.
 #          Allows editing and saving settings like database path and log intervals via a form.
-# Version: 1.0.0
+# Version: 1.2.0
 
 import streamlit as st
 import json
@@ -30,16 +30,16 @@ def configuration_page(config):
     
     # Form for editing config
     with st.form("config_form"):
-        db_path = st.text_input("Database Path", value=current_config.get('database_path', 'energy.db'))
-        log_file = st.text_input("Log File Path", value=current_config.get('log_file', 'logs/energy.log'))
-        refresh_interval = st.number_input("Refresh Interval (seconds)", value=current_config.get('refresh_interval', 60), min_value=1)
+        db_path = st.text_input("Database Path", value=current_config.get('database_path', '/home/dave/projects/house/energy.db'))
+        log_file = st.text_input("Log File Path", value=current_config.get('log_file', '/home/dave/projects/house/logs/energy.log'))
+        refresh_interval = st.number_input("Refresh Interval (seconds)", value=current_config.get('polling', {}).get('interval_seconds', 3), min_value=1)
         submitted = st.form_submit_button("Save Changes")
     
     if submitted:
         new_config = {
             'database_path': db_path,
             'log_file': log_file,
-            'refresh_interval': refresh_interval
+            'polling': {'interval_seconds': refresh_interval}
         }
         try:
             config_path = os.path.join(os.path.dirname(__file__), '..', '..', 'config', 'config.json')

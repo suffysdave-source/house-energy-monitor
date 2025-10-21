@@ -1,7 +1,7 @@
 # File: database_view.py
 # Purpose: Database view page for the House Energy Monitor app.
 #          Displays a table of energy data from the SQLite database and allows custom queries.
-# Version: 1.0.0
+# Version: 1.1.0
 
 import streamlit as st
 import pandas as pd
@@ -24,7 +24,7 @@ def database_view_page(config):
     
     # Load configuration
     try:
-        db_path = config.get('database_path', 'energy.db')
+        db_path = config.get('database_path', '/home/dave/projects/house/energy.db')
     except Exception as e:
         st.error(f"Failed to read config: {str(e)}")
         return

@@ -1,7 +1,7 @@
 # File: user_guide.py
 # Purpose: User Guide page for the House Energy Monitor app.
 #          Provides documentation and instructions for using the dashboard.
-# Version: 1.0.0
+# Version: 1.1.0
 
 import streamlit as st
 import sys

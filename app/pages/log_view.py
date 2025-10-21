@@ -1,7 +1,7 @@
 # File: log_view.py
 # Purpose: Log View page for the House Energy Monitor app.
 #          Displays recent entries from the energy log file.
-# Version: 1.0.0
+# Version: 1.1.0
 
 import streamlit as st
 import pandas as pd
@@ -23,7 +23,7 @@ def log_view_page(config):
     
     # Load configuration
     try:
-        log_file = config.get('log_file', 'logs/energy.log')
+        log_file = config.get('log_file', '/home/dave/projects/house/logs/energy.log')
     except Exception as e:
         st.error(f"Failed to read config: {str(e)}")
         return

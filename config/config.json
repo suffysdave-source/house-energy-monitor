@@ -6,6 +6,7 @@
         "user": "dave",
         "password": "energy123"
     },
+    "database_path": "/home/dave/projects/house/energy.db",
     "devices": {
         "main_meter": {
             "name": "Main Energy Meter",

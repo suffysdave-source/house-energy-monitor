@@ -1,0 +1,39 @@
+Remember
+    To activate venv: source /home/dave/projects/house/venv/bin/activate
+
+
+To do
+    - logs for logger
+        remove 2025-10-19 11:46:43 | INFO | [main_meter] Inserted reading: import=6070.572 kWh, export=7156.462 kWh, gas=2286.7 m³
+        add any other interesting information for debugging
+
+
+### To start logger:
+cd /home/dave/projects/house/scripts
+source /home/dave/projects/house/venv/bin/activate
+python logger.py
+
+To start app
+    cd /home/dave/projects/house/app
+    source /home/dave/projects/house/venv/bin/activate
+    python app.py
+To backup
+
+cd /home/dave/backups
+zip -r house_backup_$(date +%Y%m%d_%H%M%S).zip /home/dave/projects/house -x "/home/dave/projects/house/venv/*" -x "/home/dave/projects/house/*/__pycache__/*" -x "/home/dave/projects/house/*.pyc"
+unzip -l house_backup_*.zip | grep -E '\.py$|\.json$|\.log$|\.txt$'
+ls -lh house_backup_*.zip
+pg_dump -h localhost -p 5432 -U dave house_energy_db > house_energy_db_$(date +%Y%m%d_%H%M%S).sql
+
+
+To define an alias
+    edit ~/.bashrc
+add for example 
+    alias venv='source /home/dave/projects/house/venv/bin/activate'
+Then in a terminal reload the bashrc
+    source ~/.bashrc
+
+# To make a shell script executable
+sudo chmod +x script.sh
+    
+

@@ -1,0 +1,66 @@
+{
+    "database": {
+        "host": "localhost",
+        "port": 5432,
+        "name": "house_energy_db",
+        "user": "dave",
+        "password": "energy123"
+    },
+    "devices": {
+        "main_meter": {
+            "name": "Main Energy Meter",
+            "ip": "192.168.0.240",
+            "port": 80,
+            "api_path": "/api/v1",
+            "supports": [
+                "import_kwh",
+                "export_kwh",
+                "gas_m3"
+            ],
+            "active": true,
+            "color": "#FFA500"
+        },
+        "kwh_meter": {
+            "name": "kWh Meter",
+            "ip": "192.168.0.242",
+            "port": 80,
+            "api_path": "/api/v1",
+            "supports": [
+                "import_kwh",
+                "export_kwh"
+            ],
+            "active": true,
+            "color": "#FFFF00"
+        },
+        "energy_socket_1": {
+            "name": "Energy Socket 1",
+            "ip": "192.168.0.241",
+            "port": 80,
+            "api_path": "/api/v1",
+            "supports": [
+                "import_kwh",
+                "export_kwh"
+            ],
+            "active": true,
+            "color": "#8B4513"
+        }
+    },
+    "polling": {
+        "interval_seconds": 3,
+        "graph_time_range_minutes": 10
+    },
+    "logging": {
+        "enabled": true,
+        "log_file": "/home/dave/projects/house/logs/energy.log",
+        "log_level": "WARNING",
+        "structured": true,
+        "max_bytes": 5242880,
+        "backup_count": 3,
+        "time_based_rotation": true
+    },
+    "tariffs": {
+        "import_eur_per_kwh": 0.392857,
+        "export_eur_per_kwh": 0.03135,
+        "gas_eur_per_m3": 0.861218
+    }
+}

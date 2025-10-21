@@ -1,0 +1,5 @@
+{
+    "python.analysis.extraPaths": ["/home/dave/projects/house"],
+    "python.pythonPath": "/home/dave/projects/house/venv/bin/python",
+    "python.languageServer": "Pylance"
+}

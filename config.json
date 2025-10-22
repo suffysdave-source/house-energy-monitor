@@ -1,0 +1,38 @@
+{
+  "p1_meter": {
+    "ip_address": "192.168.0.240",
+    "api_url": "http://192.168.0.240/api/v1/data"
+  },
+  "polling_interval_seconds": 60,
+  "parameters_to_log": [
+    "wifi_ssid",
+    "wifi_strength",
+    "smr_version",
+    "meter_model",
+    "unique_id",
+    "active_tariff",
+    "total_power_import_kwh",
+    "total_power_import_t1_kwh",
+    "total_power_import_t2_kwh",
+    "total_power_export_kwh",
+    "total_power_export_t1_kwh",
+    "total_power_export_t2_kwh",
+    "active_power_w",
+    "active_power_l1_w",
+    "active_voltage_l1_v",
+    "active_current_a",
+    "active_current_l1_a",
+    "active_power_average_w",
+    "montly_power_peak_w",
+    "montly_power_peak_timestamp",
+    "total_gas_m3",
+    "gas_timestamp",
+    "gas_unique_id"
+  ],
+  "database": {
+    "host": "localhost",
+    "name": "consumption_db",
+    "user": "dave",
+    "password": "energy123"
+  }
+}

@@ -1,0 +1,41 @@
+2025-10-22 08:04:48,230 - INFO - Successfully connected to database.
+2025-10-22 08:04:48,232 - ERROR - Error creating table: permission denied for schema public
+LINE 1: CREATE TABLE IF NOT EXISTS p1_meter_data (id SERIAL PRIMARY ...
+                                   ^
+
+2025-10-22 08:04:51,778 - ERROR - Error inserting data: current transaction is aborted, commands ignored until end of transaction block
+
+2025-10-22 08:05:21,159 - INFO - Shutting down gracefully...
+2025-10-22 08:05:21,161 - INFO - Database connection closed.
+2025-10-22 08:11:21,710 - INFO - Successfully connected to database.
+2025-10-22 08:11:21,739 - INFO - Database table created or verified.
+2025-10-22 08:11:24,746 - WARNING - Retrying (Retry(total=2, connect=None, read=None, redirect=None, status=None)) after connection broken by 'ConnectTimeoutError(<urllib3.connection.HTTPConnection object at 0x7fc6a51e4810>, 'Connection to 192.168.0.240 timed out. (connect timeout=3)')': /api/v1/data
+2025-10-22 08:11:29,753 - WARNING - Retrying (Retry(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'ConnectTimeoutError(<urllib3.connection.HTTPConnection object at 0x7fc6a478da50>, 'Connection to 192.168.0.240 timed out. (connect timeout=3)')': /api/v1/data
+2025-10-22 08:11:36,762 - WARNING - Retrying (Retry(total=0, connect=None, read=None, redirect=None, status=None)) after connection broken by 'ConnectTimeoutError(<urllib3.connection.HTTPConnection object at 0x7fc6a478e4d0>, 'Connection to 192.168.0.240 timed out. (connect timeout=3)')': /api/v1/data
+2025-10-22 08:11:36,861 - INFO - Data inserted successfully.
+2025-10-22 08:12:36,938 - INFO - Data inserted successfully.
+2025-10-22 08:13:36,966 - INFO - Data inserted successfully.
+2025-10-22 08:14:37,028 - INFO - Data inserted successfully.
+2025-10-22 08:15:37,107 - INFO - Data inserted successfully.
+2025-10-22 08:16:37,148 - INFO - Data inserted successfully.
+2025-10-22 08:17:37,182 - INFO - Data inserted successfully.
+2025-10-22 08:18:37,428 - INFO - Data inserted successfully.
+2025-10-22 08:19:37,494 - INFO - Data inserted successfully.
+2025-10-22 08:20:37,905 - INFO - Data inserted successfully.
+2025-10-22 08:21:37,957 - INFO - Data inserted successfully.
+2025-10-22 08:22:38,001 - INFO - Data inserted successfully.
+2025-10-22 08:23:39,185 - INFO - Data inserted successfully.
+2025-10-22 08:24:39,298 - INFO - Data inserted successfully.
+2025-10-22 08:24:55,942 - INFO - Shutting down gracefully...
+2025-10-22 08:24:55,945 - INFO - Database connection closed.
+2025-10-22 08:25:02,038 - INFO - Successfully connected to database.
+2025-10-22 08:25:02,053 - INFO - Table schema incorrect, dropping and recreating p1_meter_data.
+2025-10-22 08:25:02,080 - INFO - Database table created with correct schema.
+2025-10-22 08:25:02,161 - INFO - Data inserted successfully.
+2025-10-22 08:26:02,209 - INFO - Data inserted successfully.
+2025-10-22 08:26:55,727 - INFO - Shutting down gracefully...
+2025-10-22 08:26:55,729 - INFO - Database connection closed.
+2025-10-22 08:28:18,417 - INFO - Successfully connected to database.
+2025-10-22 08:28:18,430 - INFO - Database table schema verified.
+2025-10-22 08:28:18,605 - INFO - Data inserted successfully.
+2025-10-22 08:29:18,675 - INFO - Data inserted successfully.

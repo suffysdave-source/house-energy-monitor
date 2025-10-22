@@ -1,0 +1,16 @@
+personal_notes
+
+#start database service
+sudo service postgresql start
+
+# Access PostgreSQL as the postgres User:
+sudo -u postgres psql
+
+    # List Existing Databases
+    \l 
+# Verify Data Logging
+    # enter the database
+    psql -U dave -d consumption_db -h localhost
+    #display line
+    SELECT * FROM p1_meter_data
+

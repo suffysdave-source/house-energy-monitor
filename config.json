@@ -34,5 +34,9 @@
     "name": "consumption_db",
     "user": "dave",
     "password": "energy123"
+  },
+  "power_monitor": {
+    "observation_window_seconds": 300,
+    "polling_frequency_seconds": 2
   }
 }

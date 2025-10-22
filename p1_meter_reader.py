@@ -5,10 +5,10 @@
 # a subset of parameters (total_power_import_kwh, total_power_export_kwh, active_power_w,
 # total_gas_m3) in a PostgreSQL database at regular intervals. It uses a configuration
 # file (config.json) for API URL, polling interval, and database connection details.
-# Errors and successes are logged to a file (p1_meter_log.txt) and console. Designed
-# for a Chromebook Linux container (Crostini) using a Python virtual environment.
+# Errors and key status messages are logged to a file (p1_meter_log.txt) and console.
+# Designed for a Chromebook Linux container (Crostini) using a Python virtual environment.
 # Includes robust polling with retries, timeouts, response validation, database
-# reconnection, graceful shutdown, and duplicate prevention.
+# reconnection, graceful shutdown, duplicate prevention, and a PostgreSQL service check.
 #
 # Version History:
 # Version 1.0 (2025-10-22): Initial version with direct database connection and fixed parameters.
@@ -21,6 +21,12 @@
 #                           total_power_export_kwh, active_power_w, and total_gas_m3.
 # Version 1.4 (2025-10-22): Added table schema validation to ensure only specified
 #                           parameters are logged, with option to drop and recreate table.
+# Version 1.5 (2025-10-22): Added PostgreSQL service status check and start attempt using
+#                           'service' command, with logging and error handling.
+# Version 1.6 (2025-10-22): Replaced 'service' with 'systemctl' for PostgreSQL service
+#                           check/start to support Crostini, with fallback to manual start.
+# Version 1.7 (2025-10-22): Suppressed "Data inserted successfully" log message to reduce
+#                           console output, retaining other logs.
 
 import requests
 import psycopg2
@@ -29,6 +35,7 @@ import time
 import logging
 import signal
 import sys
+import subprocess
 from datetime import datetime
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
@@ -42,6 +49,39 @@ logging.basicConfig(
         logging.StreamHandler()
     ]
 )
+
+# Function to check and start PostgreSQL service
+def ensure_postgresql_service(max_attempts=3, delay=5):
+    for attempt in range(max_attempts):
+        try:
+            # Check service status
+            result = subprocess.run(
+                ['systemctl', 'is-active', 'postgresql'],
+                capture_output=True, text=True, check=False
+            )
+            if result.stdout.strip() == 'active':
+                logging.info("PostgreSQL service is running.")
+                return True
+            else:
+                logging.warning(f"PostgreSQL service is not running. Attempting to start (attempt {attempt + 1}/{max_attempts})...")
+                # Try to start the service
+                result = subprocess.run(
+                    ['sudo', 'systemctl', 'start', 'postgresql'],
+                    capture_output=True, text=True, check=False
+                )
+                if result.returncode == 0:
+                    logging.info("PostgreSQL service started successfully.")
+                    return True
+                else:
+                    logging.error(f"Failed to start PostgreSQL service: {result.stderr}")
+        except subprocess.SubprocessError as e:
+            logging.error(f"Error checking/starting PostgreSQL service: {e}")
+        
+        if attempt < max_attempts - 1:
+            time.sleep(delay)
+    
+    logging.error("Failed to start PostgreSQL service after maximum attempts. Please run 'sudo systemctl start postgresql' manually and try again.")
+    return False
 
 # Load configuration from config.json
 try:
@@ -173,7 +213,6 @@ def insert_data(conn, data):
         cur.execute(insert_sql, values)
         conn.commit()
         cur.close()
-        logging.info("Data inserted successfully.")
     except psycopg2.IntegrityError as e:
         logging.warning(f"Skipping duplicate data insertion: {e}")
         conn.rollback()
@@ -183,6 +222,10 @@ def insert_data(conn, data):
 
 # Main loop to read data periodically
 def main():
+    # Check and start PostgreSQL service
+    if not ensure_postgresql_service():
+        sys.exit(1)
+
     global conn
     conn = connect_db()
     if conn is None:

@@ -39,3 +39,4 @@ LINE 1: CREATE TABLE IF NOT EXISTS p1_meter_data (id SERIAL PRIMARY ...
 2025-10-22 08:28:18,430 - INFO - Database table schema verified.
 2025-10-22 08:28:18,605 - INFO - Data inserted successfully.
 2025-10-22 08:29:18,675 - INFO - Data inserted successfully.
+2025-10-22 08:30:18,876 - INFO - Data inserted successfully.

@@ -4,3 +4,4 @@ logs/
 *.pyc
 __pycache__/
 app_log.txt
+p1_meter_log.txt

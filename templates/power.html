@@ -1,0 +1,232 @@
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script>{% extends "base.html" %}
+{% block title %}Power Monitor{% endblock %}
+{% block extra_head %}
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+<style>
+    .plotly-chart {
+        margin-bottom: 30px;
+        background-color: #fff;
+        padding: 10px;
+        border-radius: 8px;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+    }
+    .config-form {
+        margin: 20px 0;
+        text-align: center;
+    }
+    .config-form label {
+        font-size: 14px;
+        color: #555;
+        margin-right: 10px;
+    }
+    .config-form input {
+        padding: 8px;
+        font-size: 14px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        margin-right: 10px;
+        transition: border-color 0.2s;
+    }
+    .config-form input:focus {
+        border-color: #3498db;
+        outline: none;
+    }
+    .config-form button {
+        padding: 8px 16px;
+        font-size: 14px;
+        background-color: #3498db;
+        color: #fff;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: background-color 0.2s;
+    }
+    .config-form button:hover {
+        background-color: #2980b9;
+    }
+</style>
+{% endblock %}
+{% block content %}
+<h1>Power Monitor</h1>
+<div class="config-form">
+    <form id="config-form">
+        <label for="window">Observation Window (seconds):</label>
+        <input type="number" id="window" name="window" value="{{ observation_window }}" min="10">
+        <label for="frequency">Polling Frequency (seconds):</label>
+        <input type="number" id="frequency" name="frequency" value="{{ polling_frequency }}" min="2" step="0.1">
+        <button type="submit">Apply</button>
+    </form>
+</div>
+<div id="power_chart" class="plotly-chart"></div>
+{% endblock %}
+{% block extra_scripts %}
+<script>
+    let powerData = [];
+    let observationWindow = {{ observation_window }};
+    let pollingFrequency = {{ polling_frequency }};
+    const maxPoints = Math.ceil(observationWindow / pollingFrequency);
+
+    // Initialize Plotly chart
+    Plotly.newPlot('power_chart', [{
+        x: [],
+        y: [],
+        type: 'scatter',
+        mode: 'lines+markers',
+        line: { color: '#D3D3D3', width: 1 },
+        marker: { size: 8, color: [] }
+    }], {
+        title: 'Active Power (W)',
+        xaxis: { title: 'Time (HH:MM:SS)', tickvals: [], ticktext: [] },
+        yaxis: { title: 'Power (W)' },
+        shapes: [{
+            type: 'line',
+            x0: 0,
+            x1: 1,
+            xref: 'paper',
+            y0: 0,
+            y1: 0,
+            line: { color: 'black', width: 1, dash: 'dash' }
+        }]
+    });
+
+    // Function to fetch and update data
+    function updateChart() {
+        $.getJSON('/api/power', function(data) {
+            console.log('Received:', data, 'Length:', powerData.length, 'Max:', maxPoints);
+            if (data.timestamp && data.active_power_w !== null && !data.error) {
+                const msTimestamp = Date.now();
+                powerData.push({
+                    msTimestamp: msTimestamp,
+                    timestamp: data.timestamp,
+                    value: data.active_power_w,
+                    color: data.active_power_w >= 0 ? '#800080' : '#008000' // Purple for import, green for export
+                });
+
+                // Remove old data points
+                const cutoff = Date.now() - observationWindow * 1000;
+                powerData = powerData.filter(point => point.msTimestamp >= cutoff);
+
+                // Limit to max points
+                if (powerData.length > maxPoints) {
+                    powerData.shift();
+                }
+
+                // Prepare data for Plotly
+                const x = powerData.map(point => point.timestamp);
+                const y = powerData.map(point => point.value);
+                const colors = powerData.map(point => point.color);
+
+                // Calculate start and end timestamps for x-axis labels
+                const endTime = new Date();
+                const startTime = new Date(endTime.getTime() - observationWindow * 1000);
+                const tickvals = [x[0], x[x.length - 1] || x[0]];
+                const ticktext = [
+                    startTime.toISOString().slice(11, 19), // HH:MM:SS
+                    endTime.toISOString().slice(11, 19)
+                ];
+
+                // Redraw chart
+                Plotly.newPlot('power_chart', [{
+                    x: x,
+                    y: y,
+                    type: 'scatter',
+                    mode: 'lines+markers',
+                    line: { color: '#D3D3D3', width: 1 },
+                    marker: { size: 8, color: colors }
+                }], {
+                    title: 'Active Power (W)',
+                    xaxis: { title: 'Time (HH:MM:SS)', tickvals: tickvals, ticktext: ticktext },
+                    yaxis: { title: 'Power (W)', range: [Math.min(...y, 0) - 50, Math.max(...y, 0) + 50] },
+                    shapes: [{
+                        type: 'line',
+                        x0: 0,
+                        x1: 1,
+                        xref: 'paper',
+                        y0: 0,
+                        y1: 0,
+                        line: { color: 'black', width: 1, dash: 'dash' }
+                    }]
+                });
+            } else {
+                console.log('Invalid data:', data);
+            }
+        }).fail(function(jqXHR, textStatus, errorThrown) {
+            console.log('Error fetching power data:', textStatus, errorThrown);
+        });
+
+        setTimeout(updateChart, pollingFrequency * 1000);
+    }
+
+    // Start updates
+    updateChart();
+
+    // Handle form submission
+    $('#config-form').submit(function(e) {
+        e.preventDefault();
+        observationWindow = parseInt($('#window').val()) || observationWindow;
+        pollingFrequency = Math.max(parseFloat($('#frequency').val()) || pollingFrequency, 2);
+        powerData = []; // Clear data to reset window
+        Plotly.newPlot('power_chart', [{
+            x: [],
+            y: [],
+            type: 'scatter',
+            mode: 'lines+markers',
+            line: { color: '#D3D3D3', width: 1 },
+            marker: { size: 8, color: [] }
+        }], {
+            title: 'Active Power (W)',
+            xaxis: { title: 'Time (HH:MM:SS)', tickvals: [], ticktext: [] },
+            yaxis: { title: 'Power (W)' },
+            shapes: [{
+                type: 'line',
+                x0: 0,
+                x1: 1,
+                xref: 'paper',
+                y0: 0,
+                y1: 0,
+                line: { color: 'black', width: 1, dash: 'dash' }
+            }]
+        });
+        updateChart();
+    });
+</script>
+{% endblock %}

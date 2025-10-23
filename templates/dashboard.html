@@ -1,0 +1,235 @@
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script>{% extends "base.html" %}
+{% block title %}Energy Dashboard{% endblock %}
+{% block extra_head %}
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+<style>
+    h2 {
+        color: #34495e;
+        font-size: 22px;
+        margin-top: 30px;
+        margin-bottom: 10px;
+    }
+    table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        margin-top: 20px;
+        background-color: #fff;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+    }
+    th, td {
+        padding: 12px;
+        text-align: left;
+        border-bottom: 1px solid #e0e0e0;
+    }
+    th {
+        background-color: #2c3e50;
+        color: #ecf0f1;
+        font-weight: 600;
+    }
+    tr:last-child td {
+        border-bottom: none;
+    }
+    tr:hover {
+        background-color: #f8f9fa;
+    }
+    .filter-form {
+        margin: 20px 0;
+        text-align: center;
+    }
+    .filter-form label {
+        font-size: 14px;
+        color: #555;
+        margin-right: 10px;
+    }
+    .filter-form input {
+        padding: 8px;
+        font-size: 14px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        margin-right: 10px;
+        transition: border-color 0.2s;
+    }
+    .filter-form input:focus {
+        border-color: #3498db;
+        outline: none;
+    }
+    .filter-form button {
+        padding: 8px 16px;
+        font-size: 14px;
+        background-color: #3498db;
+        color: #fff;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: background-color 0.2s;
+    }
+    .filter-form button:hover {
+        background-color: #2980b9;
+    }
+    .plotly-chart {
+        margin-bottom: 30px;
+        background-color: #fff;
+        padding: 10px;
+        border-radius: 8px;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+    }
+</style>
+{% endblock %}
+{% block content %}
+<h1>Energy Consumption Dashboard</h1>
+<div class="filter-form">
+    <form id="filter-form" action="/dashboard" method="get">
+        <label for="selected_date">Date:</label>
+        <input type="date" id="selected_date" name="selected_date" value="{{ current_date }}">
+        <label for="selected_time">Time:</label>
+        <input type="time" id="selected_time" name="selected_time" value="{{ current_time }}">
+        <button type="submit">Filter</button>
+        <button type="button" onclick="resetToNow()">Now</button>
+    </form>
+</div>
+<h2>Power Import (kWh)</h2>
+<div id="power_import_chart" class="plotly-chart"></div>
+<h2>Power Export (kWh)</h2>
+<div id="power_export_chart" class="plotly-chart"></div>
+<h2>Active Power (W)</h2>
+<div id="active_power_chart" class="plotly-chart"></div>
+<h2>Gas Consumption (m³)</h2>
+<div id="gas_chart" class="plotly-chart"></div>
+<h2>Data Table</h2>
+<table>
+    <tr>
+        <th>Timestamp</th>
+        <th>Total Power Import (kWh)</th>
+        <th>Total Power Export (kWh)</th>
+        <th>Active Power (W)</th>
+        <th>Total Gas (m³)</th>
+    </tr>
+    {% for row in data %}
+    <tr>
+        <td>{{ row.timestamp }}</td>
+        <td>{{ row.total_power_import_kwh }}</td>
+        <td>{{ row.total_power_export_kwh }}</td>
+        <td>{{ row.active_power_w }}</td>
+        <td>{{ row.total_gas_m3 }}</td>
+    </tr>
+    {% endfor %}
+</table>
+{% endblock %}
+{% block extra_scripts %}
+<script>
+    // Reset to current date/time
+    function resetToNow() {
+        const now = new Date();
+        document.getElementById('selected_date').value = now.toISOString().slice(0, 10);
+        document.getElementById('selected_time').value = now.toISOString().slice(11, 16);
+        document.getElementById('filter-form').submit();
+    }
+
+    // Plotly charts
+    var power_import_trace = {
+        x: {{ power_import_x | tojson }},
+        y: {{ power_import_y | tojson }},
+        type: 'scatter',
+        mode: 'lines+markers',
+        name: 'Power Import (kWh)',
+        line: { color: '#3498db' },
+        marker: { size: 8 }
+    };
+    var power_import_layout = {
+        title: '',
+        xaxis: { title: 'Timestamp' },
+        yaxis: { title: 'kWh' }
+    };
+    Plotly.newPlot('power_import_chart', [power_import_trace], power_import_layout);
+
+    var power_export_trace = {
+        x: {{ power_export_x | tojson }},
+        y: {{ power_export_y | tojson }},
+        type: 'scatter',
+        mode: 'lines+markers',
+        name: 'Power Export (kWh)',
+        line: { color: '#e74c3c' },
+        marker: { size: 8 }
+    };
+    var power_export_layout = {
+        title: '',
+        xaxis: { title: 'Timestamp' },
+        yaxis: { title: 'kWh' }
+    };
+    Plotly.newPlot('power_export_chart', [power_export_trace], power_export_layout);
+
+    var active_power_trace = {
+        x: {{ active_power_x | tojson }},
+        y: {{ active_power_y | tojson }},
+        type: 'scatter',
+        mode: 'lines+markers',
+        name: 'Active Power (W)',
+        line: { color: '#2ecc71' },
+        marker: { size: 8 }
+    };
+    var active_power_layout = {
+        title: '',
+        xaxis: { title: 'Timestamp' },
+        yaxis: { title: 'W' }
+    };
+    Plotly.newPlot('active_power_chart', [active_power_trace], active_power_layout);
+
+    var gas_trace = {
+        x: {{ gas_x | tojson }},
+        y: {{ gas_y | tojson }},
+        type: 'scatter',
+        mode: 'lines+markers',
+        name: 'Gas (m³)',
+        line: { color: '#f1c40f' },
+        marker: { size: 8 }
+    };
+    var gas_layout = {
+        title: '',
+        xaxis: { title: 'Timestamp' },
+        yaxis: { title: 'm³' }
+    };
+    Plotly.newPlot('gas_chart', [gas_trace], gas_layout);
+</script>
+{% endblock %}
